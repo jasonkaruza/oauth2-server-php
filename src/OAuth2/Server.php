@@ -166,6 +166,7 @@ class Server implements ResourceControllerInterface,
             'use_openid_connect'       => false,
             'id_lifetime'              => 3600,
             'access_lifetime'          => 3600,
+            'refresh_token_lifetime' => 1209600,
             'www_realm'                => 'Service',
             'token_param_name'         => 'access_token',
             'token_bearer_header_name' => 'Bearer',
@@ -176,7 +177,7 @@ class Server implements ResourceControllerInterface,
             'allow_credentials_in_request_body' => true,
             'allow_public_clients'     => true,
             'always_issue_new_refresh_token' => false,
-            'unset_refresh_token_after_use' => true,
+            'unset_refresh_token_after_use' => false,
         ), $config);
 
         foreach ($grantTypes as $key => $grantType) {

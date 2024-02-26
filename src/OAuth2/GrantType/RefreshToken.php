@@ -32,8 +32,8 @@ class RefreshToken implements GrantTypeInterface
      * @param array                 $config  - OPTIONAL Configuration options for the server
      * @code
      *     $config = array(
-     *         'always_issue_new_refresh_token' => true, // whether to issue a new refresh token upon successful token request
-     *         'unset_refresh_token_after_use' => true // whether to unset the refresh token after after using
+     *         'always_issue_new_refresh_token' => false, // whether to issue a new refresh token upon successful token request
+     *         'unset_refresh_token_after_use' => false // whether to unset the refresh token after after using
      *     );
      * @endcode
      */
@@ -41,7 +41,8 @@ class RefreshToken implements GrantTypeInterface
     {
         $this->config = array_merge(array(
             'always_issue_new_refresh_token' => false,
-            'unset_refresh_token_after_use' => true
+            'unset_refresh_token_after_use' => false,
+            'refresh_token_lifetime' => 1209600,
         ), $config);
 
         // to preserve B.C. with v1.6
