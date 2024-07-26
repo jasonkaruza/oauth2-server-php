@@ -468,10 +468,12 @@ class Pdo implements
      * @param string $lastName
      * @return bool
      */
-    public function setUser($username, $password, $firstName = null, $lastName = null)
+    public function setUser($username, $password, $firstName = null, $lastName = null, $hashpass = true)
     {
         // do not store in plaintext
-        $password = $this->hashPassword($password);
+        if ($hashpass) {
+            $password = $this->hashPassword($password);
+        }
 
         // if it exists, update it.
         if ($this->getUser($username)) {
