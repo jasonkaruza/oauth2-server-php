@@ -1,6 +1,40 @@
 CHANGELOG for 1.x
 =================
 
+Fork changes (jasonkaruza/oauth2-server-php)
+--------------------------------------------
+
+Changes made in this fork, which are not present upstream.
+
+* [bug] `Storage\Pdo::setRefreshToken()` no longer stores the "never expires"
+  sentinel as the Unix epoch. An expiry of 0 (produced by
+  `ResponseType\AccessToken::createAccessToken()` when `refresh_token_lifetime`
+  is 0) was formatted with `date()`, which in any timezone west of UTC yields a
+  1969 datestring - below the MySQL TIMESTAMP floor of 1970-01-01 00:00:01 UTC.
+  MySQL 5.7+/8.0 with `STRICT_TRANS_TABLES,NO_ZERO_DATE` rejects that value
+  (error 1292), so issuing a non-expiring refresh token raised an uncaught
+  PDOException and the token request failed. It is now stored as the
+  `Pdo::NEVER_EXPIRES` datestring (`2999-12-31 23:59:59`), which reads back
+  through `strtotime()` as a far-future timestamp and preserves the
+  "never expires" meaning.
+
+* [schema] `Storage\Pdo::getBuildSql()` now declares every `expires` column as
+  `DATETIME` rather than `TIMESTAMP`. DATETIME spans years 1000-9999, avoiding
+  both the 1970 floor above and the 2038 TIMESTAMP ceiling, and - unlike
+  TIMESTAMP - it is not re-interpreted against the connection time zone, which
+  matters because the storage writes with `date()` and reads with `strtotime()`
+  (both wall-clock, with no UTC normalization).
+
+* [testing] Added `test/OAuth2/Storage/RefreshTokenExpiryTest.php` covering the
+  zero-lifetime path, which previously had no test coverage.
+
+Known issue, left unfixed: `Storage\Pdo::setJti()` writes a raw integer to the
+`expires` column without converting it to a datestring, and `getJti()` returns
+it unconverted. This affects the JWT bearer grant only.
+
+Upstream changelog
+------------------
+
 This changelog references the relevant changes (bug and security fixes) done
 in 1.x minor versions.
 
