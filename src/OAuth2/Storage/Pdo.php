@@ -31,6 +31,19 @@ class Pdo implements
     OpenIDAuthorizationCodeInterface
 {
     /**
+     * Datestring stored for a token that never expires.
+     *
+     * An expiry of 0 is the library's "never expires" sentinel (see
+     * ResponseType\AccessToken::createAccessToken). Formatting it with date()
+     * yields the Unix epoch - or an earlier local time in any timezone west of
+     * UTC - which falls below the MySQL TIMESTAMP floor of 1970-01-01 00:00:01
+     * UTC and is rejected outright under STRICT_TRANS_TABLES. Storing a
+     * far-future datestring keeps the "never expires" meaning intact and
+     * reads back through strtotime() as a timestamp comfortably in the future.
+     */
+    const NEVER_EXPIRES = '2999-12-31 23:59:59';
+
+    /**
      * @var \PDO
      */
     protected $db;
@@ -401,8 +414,9 @@ class Pdo implements
      */
     public function setRefreshToken($refresh_token, $client_id, $user_id, $expires, $scope = null)
     {
-        // convert expires to datestring
-        $expires = date('Y-m-d H:i:s', $expires);
+        // convert expires to datestring, mapping the "never expires" sentinel
+        // of 0 onto a far-future date rather than the Unix epoch
+        $expires = $expires ? date('Y-m-d H:i:s', $expires) : self::NEVER_EXPIRES;
 
         $stmt = $this->db->prepare(sprintf('INSERT INTO %s (refresh_token, client_id, user_id, expires, scope) VALUES (:refresh_token, :client_id, :user_id, :expires, :scope)', $this->config['refresh_token_table']));
 
@@ -665,7 +679,7 @@ class Pdo implements
               access_token         VARCHAR(40)    NOT NULL,
               client_id            VARCHAR(80)    NOT NULL,
               user_id              VARCHAR(80),
-              expires              TIMESTAMP      NOT NULL,
+              expires              DATETIME       NOT NULL,
               scope                VARCHAR(4000),
               PRIMARY KEY (access_token)
             );
@@ -675,7 +689,7 @@ class Pdo implements
               client_id           VARCHAR(80)    NOT NULL,
               user_id             VARCHAR(80),
               redirect_uri        VARCHAR(2000),
-              expires             TIMESTAMP      NOT NULL,
+              expires             DATETIME       NOT NULL,
               scope               VARCHAR(4000),
               id_token            VARCHAR(1000),
               code_challenge        VARCHAR(1000),
@@ -687,7 +701,7 @@ class Pdo implements
               refresh_token       VARCHAR(40)    NOT NULL,
               client_id           VARCHAR(80)    NOT NULL,
               user_id             VARCHAR(80),
-              expires             TIMESTAMP      NOT NULL,
+              expires             DATETIME       NOT NULL,
               scope               VARCHAR(4000),
               PRIMARY KEY (refresh_token)
             );
@@ -718,7 +732,7 @@ class Pdo implements
               issuer              VARCHAR(80)   NOT NULL,
               subject             VARCHAR(80),
               audiance            VARCHAR(80),
-              expires             TIMESTAMP     NOT NULL,
+              expires             DATETIME      NOT NULL,
               jti                 VARCHAR(2000) NOT NULL
             );
 

@@ -1,5 +1,6 @@
 # Test Files #
 test/config/test.sqlite
+.phpunit.result.cache
 vendor
 composer.lock
 .idea
